@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mecanizar - Distribuição Transversal</title>
     
-    <!-- Configurações para PWA e Dispositivos Móveis (iOS/Android) -->
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Mecanizar">
     
-    <!-- Manifesto PWA embutido via Data URI -->
     <link rel="manifest" href="data:application/json;base64,ewogICJkZWZhdWx0X2xvY2FsZSI6ICJwdCIsCiAgIm5hbWUiOiAiTWVjYW5pemFyIC0gRGlzdHJpYnVpw6fDo28iLAogICJzaG9ydF9uYW1lIjogIk1lY2FuaXphciIsCiAgImRlc2NyaXB0aW9uIjogIkF2YWxpYcOnw6NvIGRlIGRpc3RyaWJ1acOnw6NvIHRyYW5zdmVyc2FsIGRlIGZlcnRpbGl6YW50ZXMuIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmOGZhZmMiLAogICJ0aGVtZV9jb2xvciI6ICIjMGYxNzJhIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9jZG4taWNvbnMtcG5nLmZsaXRpY29uLmNvbS81MTIvMjE0LzIxNDMzOS5wbmciLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsCiAgICAgICJwdXJwb3NlIjogImFueSBtYXJsYWJsZSIKICAgIH0KICBdCn0=">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -108,7 +106,7 @@
             </div>
             <div class="flex items-center gap-2 text-xs font-semibold bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/55">
                 <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Módulo Adulanço v5.8</span>
+                <span>Módulo Adulanço v5.9</span>
             </div>
         </div>
     </header>
@@ -298,7 +296,6 @@
                     </div>
                 </div>
 
-                <!-- CONTAINER COM LARGURA TRAVADA EM EM A4 NATIVO DESDE A RENDERIZAÇÃO NO MOBILE -->
                 <div class="laudo-container laudo-desktop-view print-full-width border border-slate-200 rounded-3xl p-12 shadow-sm flex flex-col gap-5">
                     <div class="flex items-center justify-between border-b-2 border-slate-900 pb-2">
                         <div class="flex items-center gap-3">
@@ -390,13 +387,24 @@
             lucide.createIcons();
             setupBandejas();
             
+            // Força atualização agressiva do cache usando número de versão dinâmico
             if ('serviceWorker' in navigator) {
                 const swCode = `
-                    self.addEventListener('install', e => self.skipWaiting());
+                    const CACHE_NAME = 'mecanizar-v5.9';
+                    self.addEventListener('install', e => {
+                        self.skipWaiting();
+                    });
+                    self.addEventListener('activate', e => {
+                        e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => {
+                            if(k !== CACHE_NAME) return caches.delete(k);
+                        }))).then(() => self.clients.claim()));
+                    });
                     self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
                 `;
                 const blob = new Blob([swCode], { type: 'application/javascript' });
-                navigator.serviceWorker.register(URL.createObjectURL(blob));
+                navigator.serviceWorker.register(URL.createObjectURL(blob)).then(reg => {
+                    reg.update(); // Força a busca por atualizações no GitHub Pages imediatamente
+                });
             }
         });
 
@@ -676,7 +684,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: isPrint ? false : true, labels: { font: { size: 10 } } } },
+                    plugins: { legend: { display: !isPrint, labels: { font: { size: 10 } } } },
                     scales: {
                         x: { title: { display: true, text: 'Posição (m)', font: { size: 10 } }, ticks: { font: { size: 9 }, autoSkip: true, maxTicksLimit: 15 } },
                         y: { title: { display: true, text: 'Taxa (kg/ha)', font: { size: 10 } }, min: 0, ticks: { font: { size: 9 } } }

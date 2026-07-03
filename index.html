@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="pt-PT" class="h-full bg-slate-50 text-slate-800">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mecanizar - Distribuição Transversal</title>
+    
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Mecanizar">
+    
+    <link rel="manifest" href="data:application/json;base64,ewogICJkZWZhdWx0X2xvY2FsZSI6ICJwdCIsCiAgIm5hbWUiOiAiTWVjYW5pemFyIC0gRGlzdHJpYnVpw6fDo28iLAogICJzaG9ydF9uYW1lIjogIk1lY2FuaXphciIsCiAgImRlc2NyaXB0aW9uIjogIkF2YWxpYcOnw6NvIGRlIGRpc3RyaWJ1acOnw6NvIHRyYW5zdmVyc2FsIGRlIGZlcnRpbGl6YW50ZXMuIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmOGZhZmMiLAogICJ0aGVtZV9jb2xvciI6ICIjMGYxNzJhIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9jZG4taWNvbnMtcG5nLmZsaXRpY29uLmNvbS81MTIvMjE0LzIxNDMzOS5wbmciLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsCiAgICAgICJwdXJwb3NlIjogImFueSBtYXNrYWJsZSIKICAgIH0KICBdCn0=">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        mecanizar: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#16a34a',
+                            600: '#15803d',
+                            700: '#166534',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .tabs-scrollbar::-webkit-scrollbar { height: 4px; }
+        .tabs-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+        
+        @media print {
+            @page {
+                size: portrait;
+                margin: 10mm 12mm 10mm 12mm;
+            }
+            html, body {
+                height: auto !important;
+                overflow: hidden !important; 
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+            .no-print { display: none !important; }
+            
+            #tab-4 { display: block !important; }
+            #tab-1, #tab-2, #tab-3 { display: none !important; }
+
+            .print-full-width { 
+                width: 100% !important; 
+                max-width: 100% !important; 
+                box-shadow: none !important; 
+                border: none !important; 
+                background: white !important; 
+                color: black !important; 
+                padding: 0 !important; 
+                margin: 0 !important;
+            }
+            
+            .page-break { page-break-before: auto !important; }
+            
+            .chart-print-block { 
+                height: 220px !important; 
+                width: 100% !important; 
+                position: relative !important;
+                display: block !important;
+                page-break-inside: avoid !important;
+                overflow: hidden !important;
+                margin-top: 4px !important;
+            }
+            canvas {
+                max-height: 220px !important;
+                width: 100% !important;
+            }
+            
+            .laudo-container {
+                padding: 12px !important;
+                margin: 0 !important;
+                gap: 16px !important;
+            }
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col overflow-hidden bg-slate-100">
+
+    <header class="bg-slate-900 text-white shadow-md z-30 shrink-0 no-print pt-[env(safe-area-inset-top,0px)]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 bg-mecanizar-500 rounded-xl flex items-center justify-center text-white shadow-md shadow-mecanizar-500/25">
+                    <i data-lucide="settings" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-400 to-mecanizar-500 bg-clip-text text-transparent">Mecanizar</span>
+                    <span class="block text-[10px] text-slate-400 tracking-widest uppercase font-semibold">Tecnologia de Campo</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-semibold bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/55">
+                <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Módulo Adulanço v5.5</span>
+            </div>
+        </div>
+    </header>
+
+    <nav class="bg-white border-b border-slate-200 shadow-sm shrink-0 no-print">
+        <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+            <div class="flex overflow-x-auto tabs-scrollbar py-1">
+                <div class="flex space-x-2 my-1 shrink-0">
+                    <button onclick="changeTab(1)" id="tab-btn-1" class="px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-150 flex items-center gap-2 bg-mecanizar-600 text-white shadow-md shadow-mecanizar-600/10">
+                        <i data-lucide="play" class="w-4 h-4"></i><span>1. Início / Coleta</span>
+                    </button>
+                    <button onclick="changeTab(2)" id="tab-btn-2" class="px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-150 flex items-center gap-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+                        <i data-lucide="layout-grid" class="w-4 h-4"></i><span>2. Distribuição por Bandeja</span>
+                    </button>
+                    <button onclick="changeTab(3)" id="tab-btn-3" class="px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-150 flex items-center gap-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+                        <i data-lucide="bar-chart-3" class="w-4 h-4"></i><span>3. Gráfico de Transpasse</span>
+                    </button>
+                    <button onclick="changeTab(4)" id="tab-btn-4" class="px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-150 flex items-center gap-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+                        <i data-lucide="file-text" class="w-4 h-4"></i><span>4. Relatório Técnico</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full print-full-width pb-[env(safe-area-inset-bottom,16px)]">
+
+        <section id="tab-1" class="space-y-6">
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-6">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-950">Configuração de Campo e Geometria da Bandeja</h2>
+                    <p class="text-xs text-slate-500">Introduza os parâmetros reais para conversão exata de g para kg/ha.</p>
+                </div>
+
+                <form onsubmit="setupBandejas(event)" class="grid grid-cols-1 sm:grid-cols-5 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Largura Bandeja (m)</label>
+                        <input type="number" id="input-largura-b" step="0.01" value="0.50" min="0.05" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-mecanizar-500/40">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Comprimento Bandeja (m)</label>
+                        <input type="number" id="input-comprimento-b" step="0.01" value="0.50" min="0.05" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-mecanizar-500/40">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Nº de Bandejas</label>
+                        <select id="input-num-bandejas" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-mecanizar-500/40">
+                            <option value="7">7 Bandejas</option>
+                            <option value="9">9 Bandejas</option>
+                            <option value="11" selected>11 Bandejas</option>
+                            <option value="13">13 Bandejas</option>
+                            <option value="15">15 Bandejas</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Distância entre Elas (m)</label>
+                        <input type="number" id="input-espacamento" step="0.1" value="2.0" min="0.5" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-mecanizar-500/40">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Nº de Passadas do Trator</label>
+                        <input type="number" id="input-passadas" value="1" min="1" step="1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-mecanizar-500/40">
+                    </div>
+                    <div class="sm:col-span-5 flex justify-end">
+                        <button type="submit" class="cursor-pointer bg-mecanizar-600 hover:bg-mecanizar-500 text-white font-bold text-sm px-6 py-3 rounded-xl transition-all shadow-md">
+                            Gerar Painel de Pesagem
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="coleta-pesos-container" class="hidden bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-6">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-950">Registrar Peso Amostrado nas Bandejas (g)</h2>
+                </div>
+                <form onsubmit="processarTudo(event)" class="space-y-6">
+                    <div id="inputs-dinamicos" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4"></div>
+                    <div class="flex justify-end border-t border-slate-100 pt-4">
+                        <button type="submit" class="cursor-pointer bg-mecanizar-600 hover:bg-mecanizar-500 text-white font-bold text-sm px-8 py-3.5 rounded-xl transition-all shadow-md">
+                            Submeter Dados e Ver Análises
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section id="tab-2" class="hidden space-y-6">
+            <div id="placeholder-tab-2" class="bg-white rounded-2xl p-8 text-center border border-slate-200">
+                <h3 class="text-base font-bold text-slate-700">Submeta os pesos na Aba 1 para liberar esta visualização</h3>
+            </div>
+            <div id="content-tab-2" class="hidden space-y-6">
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-lg">Distribuição por Ponto de Coleta</h3>
+                        </div>
+                        <div class="bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl flex items-center gap-3">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Desvio de Assimetria:</span>
+                            <strong id="bar-skew-val" class="text-base font-black text-slate-800">0.0%</strong>
+                        </div>
+                    </div>
+                    <div id="bar-skew-alert" class="p-4 rounded-xl text-xs font-semibold border flex items-center gap-3"></div>
+                    <div class="relative h-[340px] w-full mt-6">
+                        <canvas id="chart-bar-pure"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-3" class="hidden space-y-6">
+            <div id="placeholder-tab-3" class="bg-white rounded-2xl p-8 text-center border border-slate-200">
+                <h3 class="text-base font-bold text-slate-700">Submeta os pesos na Aba 1 para simular a largura de trabalho</h3>
+            </div>
+            <div id="content-tab-3" class="hidden space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
+                    <div class="bg-white p-5 rounded-2xl border border-mecanizar-200 shadow-sm bg-mecanizar-50/20">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-mecanizar-800 mb-2">Editar Largura Útil (W) - Modo Vai e Vem</label>
+                        <div class="flex items-center gap-4">
+                            <input type="range" id="slider-largura-trabalho" min="4" max="44" step="0.5" value="24" oninput="ajustarLarguraDinamica(this.value)" class="w-full accent-mecanizar-600">
+                            <span id="slider-val-display" class="text-base font-black text-mecanizar-700 font-mono shrink-0 bg-white border border-mecanizar-200 px-2.5 py-1 rounded-xl">24.0 m</span>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block">CV Estrito (Entre -W e +W)</span>
+                        <h3 id="kpi-cv" class="text-2xl font-black text-slate-900 mt-1">-- %</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Massa Média Útil</span>
+                        <h3 id="kpi-media" class="text-2xl font-black text-slate-900 mt-1">-- kg/ha</h3>
+                    </div>
+                </div>
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                    <div class="relative h-[400px] w-full">
+                        <canvas id="chart-3passadas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-4" class="hidden space-y-6 print-full-width">
+            <div id="placeholder-tab-4" class="bg-white rounded-2xl p-8 text-center border border-slate-200 no-print">
+                <h3 class="text-base font-bold text-slate-700">Relatório indisponível. Submeta dados primeiro</h3>
+            </div>
+
+            <div id="content-tab-4" class="hidden space-y-6 print-full-width">
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm no-print space-y-4">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900">Identificação e Informações Adicionais do Laudo</h2>
+                        <p class="text-xs text-slate-500">Preencha estes dados apenas antes de realizar a impressão final do laudo técnico.</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Propriedade / Fazenda</label>
+                            <input type="text" id="form-inp-fazenda" oninput="atualizarTextosLaudo()" placeholder="Ex: Fazenda Santa Maria" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mecanizar-500/40">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Município / UF</label>
+                            <input type="text" id="form-inp-local" oninput="atualizarTextosLaudo()" placeholder="Ex: Sinop - MT" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mecanizar-500/40">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Técnico Responsável</label>
+                            <input type="text" id="form-inp-tecnico" oninput="atualizarTextosLaudo()" placeholder="Ex: Eng. Agrônomo Silva" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mecanizar-500/40">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Registro CREA / ART</label>
+                            <input type="text" id="form-inp-crea" oninput="atualizarTextosLaudo()" placeholder="Ex: CREA 12345/D" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mecanizar-500/40">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Marca / Máquina</label>
+                            <input type="text" id="form-inp-maquina" oninput="atualizarTextosLaudo()" placeholder="Ex: John Deere" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mecanizar-500/40">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Modelo do Equipamento</label>
+                            <input type="text" id="form-inp-modelo" oninput="atualizarTextosLaudo()" placeholder="Ex: M4040N" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mecanizar-500/40">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Insumo / Produto</label>
+                            <input type="text" id="form-inp-produto" oninput="atualizarTextosLaudo()" placeholder="Ex: Ureia Granulada" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mecanizar-500/40">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Lote do Produto</label>
+                            <input type="text" id="form-inp-lote" oninput="atualizarTextosLaudo()" placeholder="Ex: LT-2026-X8" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mecanizar-500/40">
+                        </div>
+                    </div>
+                    <div class="flex justify-end pt-2">
+                        <button onclick="dispararImpressaoFormatada()" class="cursor-pointer bg-mecanizar-600 hover:bg-mecanizar-500 text-white font-bold text-xs px-6 py-3 rounded-xl transition-all shadow-sm flex items-center gap-2">
+                            <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Laudo Técnico Completo
+                        </button>
+                    </div>
+                </div>
+
+                <div class="laudo-container bg-white border border-slate-200 rounded-3xl p-8 md:p-10 shadow-sm flex flex-col gap-6 print-full-width print:shadow-none print:border-none">
+                    <div class="flex items-center justify-between border-b-2 border-slate-900 pb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="h-10 w-10 bg-mecanizar-500 rounded-lg flex items-center justify-center text-white font-bold text-base">M</div>
+                            <div>
+                                <h1 class="text-xl font-black text-slate-900 tracking-tight">MECANIZAR</h1>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Laudo Oficial de Distribuição Transversal</p>
+                            </div>
+                        </div>
+                        <div class="text-right font-mono text-xs text-slate-600 font-bold" id="laudo-data">--/--/----</div>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl text-xs border border-slate-200 font-medium text-slate-700 print:bg-white print:border-slate-300">
+                        <div>
+                            <span class="text-slate-400 block font-bold uppercase tracking-wider text-[9px] mb-0.5">Propriedade:</span>
+                            <strong id="lbl-laudo-fazenda" class="text-slate-900 font-bold">Não Informado</strong>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block font-bold uppercase tracking-wider text-[9px] mb-0.5">Localização:</span>
+                            <strong id="lbl-laudo-local" class="text-slate-900 font-bold">Não Informado</strong>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block font-bold uppercase tracking-wider text-[9px] mb-0.5">Equipamento / Modelo:</span>
+                            <strong id="lbl-laudo-maquina" class="text-slate-900 font-bold">Não Informado</strong>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block font-bold uppercase tracking-wider text-[9px] mb-0.5">Insumo / Lote:</span>
+                            <strong id="lbl-laudo-produto" class="text-slate-900 font-bold">Não Informado</strong>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4 bg-slate-900 p-4 rounded-xl text-xs text-slate-300 font-medium">
+                        <div><span class="text-slate-400 block font-bold uppercase tracking-wider text-[10px] mb-0.5">Largura Passada (W):</span><strong id="laudo-w" class="text-white text-sm font-extrabold">-- m</strong></div>
+                        <div><span class="text-slate-400 block font-bold uppercase tracking-wider text-[10px] mb-0.5">CV Estrito (-W a +W):</span><strong id="laudo-cv" class="text-white text-sm font-extrabold">-- %</strong></div>
+                        <div><span class="text-slate-400 block font-bold uppercase tracking-wider text-[10px] mb-0.5">Desvio de Assimetria:</span><strong id="laudo-skew" class="text-white text-sm font-extrabold">--</strong></div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">1. Gráfico de Distribuição por Bandejas (kg/ha)</h3>
+                        <div class="chart-print-block h-[220px] w-full border border-slate-100 rounded-xl p-1 bg-white">
+                            <canvas id="chart-laudo-bar-print"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">2. Gráfico de Transpasse Lateral (Sobreposição de 3 Passadas)</h3>
+                        <div class="chart-print-block h-[220px] w-full border border-slate-100 rounded-xl p-1 bg-white">
+                            <canvas id="chart-laudo-line-print"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t-2 border-slate-200 items-end">
+                        <div>
+                            <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Parecer Técnico Agronómico</h4>
+                            <p id="laudo-diagnostico" class="text-xs text-slate-700 leading-relaxed font-medium">A processar dados...</p>
+                        </div>
+                        <div class="flex flex-col justify-end items-center pt-4">
+                            <div class="w-full max-w-[240px] border-b border-slate-400 pb-1 text-center"></div>
+                            <span id="lbl-laudo-assinatura" class="text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-wide">Técnico Responsável</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        let state = {
+            numBandejas: 11,
+            espacamento: 2.0,
+            larguraB: 0.5,
+            comprimentoB: 0.5,
+            areaB: 0.25,
+            larguraTrabalho: 24,
+            passadas: 1,
+            coletasG: [],
+            coletasKgha: [],
+            desviaPct: 0,
+            ladoPredominante: 'Equilibrado'
+        };
+
+        let chartBarInstance = null;
+        let chartBarPrintInstance = null;
+        let chartInstance = null;
+        let chartPrintInstance = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            setupBandejas();
+            
+            // Ativa o Service Worker para habilitar instalação nativa PWA no Android/iOS
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    self.addEventListener('install', e => self.skipWaiting());
+                    self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
+                `;
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                navigator.serviceWorker.register(URL.createObjectURL(blob));
+            }
+        });
+
+        window.addEventListener('beforeprint', () => {
+            if (chartBarPrintInstance) {
+                chartBarPrintInstance.resize();
+                chartBarPrintInstance.update('none');
+            }
+            if (chartPrintInstance) {
+                chartPrintInstance.resize();
+                chartPrintInstance.update('none');
+            }
+        });
+
+        function changeTab(tabNum) {
+            if ((tabNum === 2 || tabNum === 3 || tabNum === 4) && state.coletasG.length === 0) {
+                alert("Por favor, introduza e envie as pesagens das bandejas na Aba 1 primeiro.");
+                return;
+            }
+            for (let i = 1; i <= 4; i++) {
+                const btn = document.getElementById(`tab-btn-${i}`);
+                const sec = document.getElementById(`tab-${i}`);
+                if (i === tabNum) {
+                    sec.classList.remove('hidden');
+                    btn.className = "px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-150 flex items-center gap-2 bg-mecanizar-600 text-white shadow-md shadow-mecanizar-600/10 shrink-0";
+                } else {
+                    sec.classList.add('hidden');
+                    btn.className = "px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-150 flex items-center gap-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 shrink-0";
+                }
+            }
+        }
+
+        function setupBandejas(e) {
+            if (e) e.preventDefault();
+            state.larguraB = parseFloat(document.getElementById('input-largura-b').value);
+            state.comprimentoB = parseFloat(document.getElementById('input-comprimento-b').value);
+            state.areaB = state.larguraB * state.comprimentoB;
+            state.numBandejas = parseInt(document.getElementById('input-num-bandejas').value);
+            state.espacamento = parseFloat(document.getElementById('input-espacamento').value);
+            state.passadas = parseInt(document.getElementById('input-passadas').value) || 1;
+
+            const container = document.getElementById('inputs-dinamicos');
+            container.innerHTML = '';
+            const centerIdx = (state.numBandejas + 1) / 2;
+            for (let i = 1; i <= state.numBandejas; i++) {
+                const distMetros = (i - centerIdx) * state.espacamento;
+                const labelPos = distMetros === 0 ? "Centro" : `${distMetros > 0 ? '+' : ''}${distMetros.toFixed(1)}m`;
+                
+                const div = document.createElement('div');
+                div.className = "bg-slate-50 border border-slate-200 rounded-xl p-3 shadow-sm flex flex-col justify-between";
+                div.innerHTML = `
+                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 flex justify-between">
+                        <span>B<sup>${i}</sup></span><span class="text-mecanizar-600 font-mono">${labelPos}</span>
+                    </div>
+                    <div class="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 py-1">
+                        <input type="number" step="0.01" min="0" required id="b-input-${i}" class="w-full text-right font-bold text-slate-800 font-mono text-sm focus:outline-none" value="0.0">
+                        <span class="text-xs text-slate-400 font-mono">g</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            }
+            document.getElementById('coleta-pesos-container').classList.remove('hidden');
+        }
+
+        function processarTudo(e) {
+            e.preventDefault();
+            state.coletasG = [];
+            for (let i = 1; i <= state.numBandejas; i++) {
+                const val = parseFloat(document.getElementById(`b-input-${i}`).value) || 0;
+                state.coletasG.push(val);
+            }
+
+            const areaBandeja = state.areaB > 0 ? state.areaB : 0.25;
+            const p = state.passadas > 0 ? state.passadas : 1;
+
+            state.coletasKgha = state.coletasG.map(g => {
+                const gramasPorPassada = g / p;
+                return (gramasPorPassada * 10) / areaBandeja;
+            });
+
+            const half = Math.floor(state.numBandejas / 2);
+            let somaEsquerda = 0;
+            let somaDireita = 0;
+            for (let i = 0; i < half; i++) {
+                somaEsquerda += state.coletasKgha[i];
+                somaDireita += state.coletasKgha[state.numBandejas - 1 - i];
+            }
+
+            const totalLados = somaEsquerda + somaDireita;
+            if (totalLados === 0 || Math.abs(somaEsquerda - somaDireita) < 1e-4) {
+                state.desviaPct = 0;
+                state.ladoPredominante = 'Equilibrado';
+            } else {
+                state.desviaPct = ((somaDireita - somaEsquerda) / (totalLados / 2)) * 100;
+                state.ladoPredominante = state.desviaPct > 0 ? 'Direita' : 'Esquerda';
+            }
+
+            const absDesvio = Math.abs(state.desviaPct);
+            document.getElementById('bar-skew-val').textContent = `${state.desviaPct.toFixed(1)}%`;
+            
+            const alertBox = document.getElementById('bar-skew-alert');
+            if (absDesvio <= 5) {
+                alertBox.className = "p-4 rounded-xl text-xs font-semibold border flex items-center gap-3 bg-emerald-50 border-emerald-200 text-emerald-800";
+                alertBox.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> Distribuição Aprovada. O desvio lateral é de <strong>${absDesvio.toFixed(1)}%</strong>, mantendo o Perfil Simétrico (limite max 5%).`;
+            } else {
+                alertBox.className = "p-4 rounded-xl text-xs font-semibold border flex items-center gap-3 bg-red-50 border-red-200 text-red-800";
+                alertBox.innerHTML = `<i data-lucide="x-circle" class="w-4 h-4"></i> <strong>Distribuição Condenada!</strong> O desvio lateral de <strong>${absDesvio.toFixed(1)}%</strong> excede o teto de 5%, sobrecarregando a <strong>${state.ladoPredominante}</strong>.`;
+            }
+
+            document.getElementById('placeholder-tab-2').classList.add('hidden');
+            document.getElementById('content-tab-2').classList.remove('hidden');
+            document.getElementById('placeholder-tab-3').classList.add('hidden');
+            document.getElementById('content-tab-3').classList.remove('hidden');
+            document.getElementById('placeholder-tab-4').classList.add('hidden');
+            document.getElementById('content-tab-4').classList.remove('hidden');
+
+            renderBarChart('chart-bar-pure', false);
+            renderBarChart('chart-laudo-bar-print', true);
+            recalcularTranspasseERender();
+
+            lucide.createIcons();
+            changeTab(2); 
+        }
+
+        function ajustarLarguraDinamica(val) {
+            state.larguraTrabalho = parseFloat(val);
+            document.getElementById('slider-val-display').textContent = `${state.larguraTrabalho.toFixed(1)} m`;
+            recalcularTranspasseERender();
+        }
+
+        function atualizarTextosLaudo() {
+            const fazenda = document.getElementById('form-inp-fazenda').value || 'Não Informado';
+            const local = document.getElementById('form-inp-local').value || 'Não Informado';
+            const tecnico = document.getElementById('form-inp-tecnico').value || 'Não Informado';
+            const crea = document.getElementById('form-inp-crea').value ? ` - ${document.getElementById('form-inp-crea').value}` : '';
+            const maquina = document.getElementById('form-inp-maquina').value || 'Não Informado';
+            const modelo = document.getElementById('form-inp-modelo').value ? ` / ${document.getElementById('form-inp-modelo').value}` : '';
+            const produto = document.getElementById('form-inp-produto').value || 'Não Informado';
+            const lote = document.getElementById('form-inp-lote').value ? ` (Lote: ${document.getElementById('form-inp-lote').value})` : '';
+
+            document.getElementById('lbl-laudo-fazenda').textContent = fazenda;
+            document.getElementById('lbl-laudo-local').textContent = local;
+            document.getElementById('lbl-laudo-maquina').textContent = maquina + modelo;
+            document.getElementById('lbl-laudo-produto').textContent = produto + lote;
+            document.getElementById('lbl-laudo-assinatura').textContent = tecnico + crea;
+        }
+
+        function dispararImpressaoFormatada() {
+            const tituloOriginal = document.title;
+            
+            const maquinaRaw = document.getElementById('form-inp-maquina').value || 'Equipamento';
+            const modeloRaw = document.getElementById('form-inp-modelo').value || '';
+            const maquinaClean = `${maquinaRaw}_${modeloRaw}`.trim().replace(/[^a-zA-Z0-9]/g, '_');
+            
+            const tecnicoRaw = document.getElementById('form-inp-tecnico').value || 'Tecnico';
+            const tecnicoClean = tecnicoRaw.trim().replace(/[^a-zA-Z0-9]/g, '_');
+            
+            const hoje = new Date();
+            const ano = hoje.getFullYear();
+            const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+            const dia = String(hoje.getDate()).padStart(2, '0');
+            const dataString = `${ano}${mes}${dia}`;
+            
+            document.title = `${maquinaClean}_${dataString}_${tecnicoClean}`.replace(/__+/g, '_');
+            
+            window.print();
+            
+            setTimeout(() => {
+                document.title = tituloOriginal;
+            }, 500);
+        }
+
+        function recalcularTranspasseERender() {
+            const lt = state.larguraTrabalho;
+            const N = state.numBandejas;
+            const centerIdx = (N + 1) / 2;
+
+            const physicalX = [];
+            for (let i = 0; i < N; i++) {
+                physicalX.push((i + 1 - centerIdx) * state.espacamento);
+            }
+
+            function getInterpolatedVal(x) {
+                if (x < physicalX[0] || x > physicalX[N - 1]) return 0;
+                for (let i = 0; i < N - 1; i++) {
+                    if (x >= physicalX[i] && x <= physicalX[i+1]) {
+                        const xA = physicalX[i], xB = physicalX[i+1];
+                        const yA = state.coletasKgha[i], yB = state.coletasKgha[i+1];
+                        return yA + ((x - xA) * (yB - yA)) / (xB - xA);
+                    }
+                }
+                return 0;
+            }
+
+            const pontosAmostragemCV = 50;
+            const valoresFocoCV = [];
+            let somaFoco = 0;
+
+            for (let i = 0; i <= pontosAmostragemCV; i++) {
+                const xFoco = -lt + (i * (lt * 2)) / pontosAmostragemCV; 
+                const yCombined = getInterpolatedVal(xFoco) + getInterpolatedVal(-lt - xFoco) + getInterpolatedVal(lt - xFoco);
+                valoresFocoCV.push(yCombined);
+                somaFoco += yCombined;
+            }
+
+            const mediaFoco = somaFoco / (pontosAmostragemCV + 1);
+            let sumSqFoco = 0;
+            valoresFocoCV.forEach(v => sumSqFoco += Math.pow(v - mediaFoco, 2));
+            const stdDevFoco = Math.sqrt(sumSqFoco / pontosAmostragemCV);
+            const cvEstrito = mediaFoco > 0 ? (stdDevFoco / mediaFoco) * 100 : 0;
+
+            document.getElementById('kpi-media').textContent = `${mediaFoco.toFixed(1)} kg/ha`;
+            document.getElementById('kpi-cv').textContent = `${cvEstrito.toFixed(1)} %`;
+
+            const pointsCount = 140;
+            const chartLabels = [];
+            const curveCentral = [];
+            const curveEsquerda = [];
+            const curveDireita = [];
+            const curveCombinada = [];
+
+            const minX = -lt * 1.6;
+            const maxX = lt * 1.6;
+
+            for (let i = 0; i <= pointsCount; i++) {
+                const x = minX + (i * (maxX - minX)) / pointsCount;
+                chartLabels.push(x.toFixed(1) + 'm');
+                
+                const yCent = getInterpolatedVal(x);
+                const yEsq = getInterpolatedVal(-lt - x); 
+                const yDir = getInterpolatedVal(lt - x);  
+                
+                curveCentral.push(yCent);
+                curveEsquerda.push(yEsq);
+                curveDireita.push(yDir);
+                curveCombinada.push(yCent + yEsq + yDir);
+            }
+
+            renderLineChart('chart-3passadas', chartLabels, curveCentral, curveEsquerda, curveDireita, curveCombinada, lt);
+            renderLineChart('chart-laudo-line-print', chartLabels, curveCentral, curveEsquerda, curveDireita, curveCombinada, lt);
+
+            document.getElementById('laudo-w').textContent = `${lt.toFixed(1)} metros`;
+            document.getElementById('laudo-cv').textContent = `${cvEstrito.toFixed(1)} %`;
+            document.getElementById('laudo-skew').textContent = `${state.desviaPct.toFixed(1)}% (${state.ladoPredominante === 'Equilibrado' ? 'Simétrico' : state.ladoPredominante})`;
+            document.getElementById('laudo-data').textContent = new Date().toLocaleString('pt-PT');
+
+            const diagEl = document.getElementById('laudo-diagnostico');
+            let textoLaudo = '';
+            
+            if (Math.abs(state.desviaPct) <= 5) {
+                textoLaudo += `O implemento apresenta excelente simetria mecânica lateral (desvio de ${Math.abs(state.desviaPct).toFixed(1)}%). `;
+            } else {
+                textoLaudo += `<strong>LAUDO REPROVADO POR ASSIMETRIA.</strong> Desvio de ${Math.abs(state.desviaPct).toFixed(1)}% ultrapassa os 5% permitidos, sobrecarregando o lado da ${state.ladoPredominante}. `;
+            }
+
+            if (cvEstrito <= 15) {
+                textoLaudo += `CV estrito fixou-se em <strong>${cvEstrito.toFixed(1)}%</strong> na zona útil de <strong>${lt.toFixed(1)}m</strong> (Modo Vai e Vem), validando a uniformidade.`;
+            } else {
+                textoLaudo += `O CV de <strong>${cvEstrito.toFixed(1)}%</strong> indica aplicação instável na largura de trabalho selecionada.`;
+            }
+            diagEl.innerHTML = textoLaudo;
+        }
+
+        function renderBarChart(canvasId, isPrint) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const centerIdx = (state.numBandejas + 1) / 2;
+            const labels = state.coletasKgha.map((_, i) => {
+                const dist = (i + 1 - centerIdx) * state.espacamento;
+                return dist === 0 ? "Centro" : `${dist > 0 ? '+' : ''}${dist.toFixed(1)}m`;
+            });
+
+            if (isPrint && chartBarPrintInstance) chartBarPrintInstance.destroy();
+            if (!isPrint && chartBarInstance) chartBarInstance.destroy();
+
+            const configChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Deposição por Bandeja (kg/ha)',
+                        data: state.coletasKgha,
+                        backgroundColor: 'rgba(22, 163, 74, 0.25)',
+                        borderColor: '#16a34a',
+                        borderWidth: 2,
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true } },
+                    scales: {
+                        x: { title: { display: true, text: 'Posição (m)', font: { size: 10 } } },
+                        y: { title: { display: true, text: 'Taxa (kg/ha)', font: { size: 10 } }, min: 0 }
+                    }
+                }
+            });
+
+            if (isPrint) chartBarPrintInstance = configChart;
+            else chartBarInstance = configChart;
+        }
+
+        function renderLineChart(canvasId, labels, central, esquerda, direita, combinada, lt) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+
+            if (canvasId === 'chart-3passadas' && chartInstance) chartInstance.destroy();
+            if (canvasId === 'chart-laudo-line-print' && chartPrintInstance) chartPrintInstance.destroy();
+
+            const isPrint = canvasId === 'chart-laudo-line-print';
+
+            const datasets = [
+                {
+                    label: 'Passada Central',
+                    data: central,
+                    borderColor: '#16a34a',
+                    borderWidth: 2,
+                    fill: false,
+                    pointRadius: 0
+                },
+                {
+                    label: `Passada Esq. (Invertida)`,
+                    data: esquerda,
+                    borderColor: '#64748b',
+                    borderWidth: 1.5,
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                },
+                {
+                    label: `Passada Dir. (Invertida)`,
+                    data: direita,
+                    borderColor: '#64748b',
+                    borderWidth: 1.5,
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                },
+                {
+                    label: 'Combinada (Sobreposição)',
+                    data: combinada,
+                    borderColor: '#4f46e5',
+                    borderWidth: 3,
+                    backgroundColor: 'rgba(79, 70, 229, 0.08)',
+                    fill: true,
+                    pointRadius: 0
+                }
+            ];
+
+            const configChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: labels, datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { boxWidth: 10, font: { size: isPrint ? 10 : 11 } } }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Largura Lateral (m)', font: { size: 10 } } },
+                        y: { title: { display: true, text: 'Taxa (kg/ha)', font: { size: 10 } }, min: 0 }
+                    }
+                }
+            });
+
+            if (canvasId === 'chart-3passadas') chartInstance = configChart;
+            if (canvasId === 'chart-laudo-line-print') chartPrintInstance = configChart;
+        }
+    </script>
+</body>
+</html>

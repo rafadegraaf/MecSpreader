@@ -106,7 +106,7 @@
             </div>
             <div class="flex items-center gap-2 text-xs font-semibold bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/55">
                 <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Módulo Adulanço v5.9</span>
+                <span>Módulo Adulanço v6.0</span>
             </div>
         </div>
     </header>
@@ -387,10 +387,10 @@
             lucide.createIcons();
             setupBandejas();
             
-            // Força atualização agressiva do cache usando número de versão dinâmico
+            // Gerenciamento agressivo de cache PWA para forçar atualização no celular
             if ('serviceWorker' in navigator) {
                 const swCode = `
-                    const CACHE_NAME = 'mecanizar-v5.9';
+                    const CACHE_NAME = 'mecanizar-v6.0';
                     self.addEventListener('install', e => {
                         self.skipWaiting();
                     });
@@ -403,7 +403,7 @@
                 `;
                 const blob = new Blob([swCode], { type: 'application/javascript' });
                 navigator.serviceWorker.register(URL.createObjectURL(blob)).then(reg => {
-                    reg.update(); // Força a busca por atualizações no GitHub Pages imediatamente
+                    reg.update();
                 });
             }
         });
@@ -428,14 +428,16 @@
 
         function setupBandejas(e) {
             if (e) e.preventDefault();
-            state.larguraB = parseFloat(document.getElementById('input-largura-b').value);
-            state.comprimentoB = parseFloat(document.getElementById('input-comprimento-b').value);
+            state.larguraB = parseFloat(document.getElementById('input-largura-b').value) || 0.5;
+            state.comprimentoB = parseFloat(document.getElementById('input-comprimento-b').value) || 0.5;
             state.areaB = state.larguraB * state.comprimentoB;
-            state.numBandejas = parseInt(document.getElementById('input-num-bandejas').value);
-            state.espacamento = parseFloat(document.getElementById('input-espacamento').value);
+            state.numBandejas = parseInt(document.getElementById('input-num-bandejas').value) || 11;
+            state.espacamento = parseFloat(document.getElementById('input-espacamento').value) || 2.0;
             state.passadas = parseInt(document.getElementById('input-passadas').value) || 1;
 
             const container = document.getElementById('inputs-dinamicos');
+            if (!container) return;
+            
             container.innerHTML = '';
             const centerIdx = (state.numBandejas + 1) / 2;
             for (let i = 1; i <= state.numBandejas; i++) {
@@ -455,14 +457,17 @@
                 `;
                 container.appendChild(div);
             }
-            document.getElementById('coleta-pesos-container').classList.add('hidden');
+            
+            const pnlContainer = document.getElementById('coleta-pesos-container');
+            if(pnlContainer) pnlContainer.classList.remove('hidden');
         }
 
         function processarTudo(e) {
             e.preventDefault();
             state.coletasG = [];
             for (let i = 1; i <= state.numBandejas; i++) {
-                const val = parseFloat(document.getElementById(`b-input-${i}`).value) || 0;
+                const inputEl = document.getElementById(`b-input-${i}`);
+                const val = inputEl ? parseFloat(inputEl.value) : 0;
                 state.coletasG.push(val);
             }
 
@@ -632,8 +637,8 @@
                 curveCombinada.push(yCent + yEsq + yDir);
             }
 
-            renderLineChart('chart-3passadas', chartLabels, curveCentral, curveEsquerda, curveDireita, curveCombinada, lt);
-            renderLineChart('chart-laudo-line-print', chartLabels, curveCentral, curveEsquerda, curveDireita, curveCombinada, lt);
+            renderLineChart('chart-3passadas', chartLabels, curveCentral, curveEsquerda, curveDireita, curveCombinada, false);
+            renderLineChart('chart-laudo-line-print', chartLabels, curveCentral, curveEsquerda, curveDireita, curveCombinada, true);
 
             document.getElementById('laudo-w').textContent = `${lt.toFixed(1)} metros`;
             document.getElementById('laudo-cv').textContent = `${cvEstrito.toFixed(1)} %`;
@@ -658,7 +663,10 @@
         }
 
         function renderBarChart(canvasId, isPrint) {
-            const ctx = document.getElementById(canvasId).getContext('2d');
+            const canvasEl = document.getElementById(canvasId);
+            if (!canvasEl) return;
+            const ctx = canvasEl.getContext('2d');
+            
             const centerIdx = (state.numBandejas + 1) / 2;
             const labels = state.coletasKgha.map((_, i) => {
                 const dist = (i + 1 - centerIdx) * state.espacamento;
@@ -696,13 +704,13 @@
             else chartBarInstance = configChart;
         }
 
-        function renderLineChart(canvasId, labels, central, esquerda, direita, combinada, lt) {
-            const ctx = document.getElementById(canvasId).getContext('2d');
+        function renderLineChart(canvasId, labels, central, esquerda, direita, combinada, isPrint) {
+            const canvasEl = document.getElementById(canvasId);
+            if (!canvasEl) return;
+            const ctx = canvasEl.getContext('2d');
 
-            if (canvasId === 'chart-3passadas' && chartInstance) chartInstance.destroy();
-            if (canvasId === 'chart-laudo-line-print' && chartPrintInstance) chartPrintInstance.destroy();
-
-            const isPrint = canvasId === 'chart-laudo-line-print';
+            if (!isPrint && chartInstance) chartInstance.destroy();
+            if (isPrint && chartPrintInstance) chartPrintInstance.destroy();
 
             const datasets = [
                 {
@@ -761,8 +769,8 @@
                 }
             });
 
-            if (canvasId === 'chart-3passadas') chartInstance = configChart;
-            if (canvasId === 'chart-laudo-line-print') chartPrintInstance = configChart;
+            if (!isPrint) chartInstance = configChart;
+            else chartPrintInstance = configChart;
         }
     </script>
 </body>

@@ -5,11 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mecanizar - Distribuição Transversal</title>
     
+    <!-- Configurações para PWA e Dispositivos Móveis (iOS/Android) -->
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Mecanizar">
     
+    <!-- Manifesto PWA embutido via Data URI -->
     <link rel="manifest" href="data:application/json;base64,ewogICJkZWZhdWx0X2xvY2FsZSI6ICJwdCIsCiAgIm5hbWUiOiAiTWVjYW5pemFyIC0gRGlzdHJpYnVpw6fDo28iLAogICJzaG9ydF9uYW1lIjogIk1lY2FuaXphciIsCiAgImRlc2NyaXB0aW9uIjogIkF2YWxpYcOnw6NvIGRlIGRpc3RyaWJ1acOnw6NvIHRyYW5zdmVyc2FsIGRlIGZlcnRpbGl6YW50ZXMuIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmOGZhZmMiLAogICJ0aGVtZV9jb2xvciI6ICIjMGYxNzJhIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9jZG4taWNvbnMtcG5nLmZsaXRpY29uLmNvbS81MTIvMjE0LzIxNDMzOS5wbmciLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsCiAgICAgICJwdXJwb3NlIjogImFueSBtYXJsYWJsZSIKICAgIH0KICBdCn0=">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -41,7 +43,7 @@
         .tabs-scrollbar::-webkit-scrollbar { height: 4px; }
         .tabs-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         
-        /* Força o contêiner do laudo na tela a simular o tamanho exato da folha A4 de forma fixa */
+        /* Contêiner de tela para simular A4 fixo */
         .laudo-desktop-view {
             width: 794px !important;
             min-width: 794px !important;
@@ -50,7 +52,7 @@
             margin: 0 auto !important;
         }
 
-        /* --- CONFIGURAÇÃO DE IMPRESSÃO ESTÁTICA --- */
+        /* --- CONFIGURAÇÃO DE IMPRESSÃO - REMOÇÃO DE BORDAS E MARGENS EXTRA --- */
         @media print {
             @page {
                 size: portrait;
@@ -66,9 +68,10 @@
             }
             .no-print { display: none !important; }
             
-            #tab-4 { display: block !important; width: 794px !important; }
+            #tab-4 { display: block !important; width: 794px !important; background: #ffffff !important; }
             #tab-1, #tab-2, #tab-3 { display: none !important; }
 
+            /* Remove sombras, fundos cinzas e contornos circulares da folha A4 final */
             .print-full-width { 
                 width: 794px !important;
                 max-width: 794px !important;
@@ -79,6 +82,10 @@
                 padding: 45px 50px !important; 
                 margin: 0 auto !important;
                 box-sizing: border-box !important;
+                background: #ffffff !important;
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0px !important;
                 page-break-inside: avoid !important;
                 page-break-after: avoid !important;
             }
@@ -87,6 +94,15 @@
                 height: 200px !important; 
                 width: 694px !important;
                 position: relative !important;
+            }
+
+            .laudo-container {
+                padding: 0px !important;
+                margin: 0px !important;
+                border: none !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                border-radius: 0px !important;
             }
         }
     </style>
@@ -106,7 +122,7 @@
             </div>
             <div class="flex items-center gap-2 text-xs font-semibold bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/55">
                 <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Módulo Adulanço v6.0</span>
+                <span>Módulo Adulanço v6.1</span>
             </div>
         </div>
     </header>
@@ -296,6 +312,7 @@
                     </div>
                 </div>
 
+                <!-- CONTAINER PRINCIPAL DO LAUDO TOTALMENTE INTEGRADO E LIMPO NA IMPRESSÃO -->
                 <div class="laudo-container laudo-desktop-view print-full-width border border-slate-200 rounded-3xl p-12 shadow-sm flex flex-col gap-5">
                     <div class="flex items-center justify-between border-b-2 border-slate-900 pb-2">
                         <div class="flex items-center gap-3">
@@ -387,10 +404,9 @@
             lucide.createIcons();
             setupBandejas();
             
-            // Gerenciamento agressivo de cache PWA para forçar atualização no celular
             if ('serviceWorker' in navigator) {
                 const swCode = `
-                    const CACHE_NAME = 'mecanizar-v6.0';
+                    const CACHE_NAME = 'mecanizar-v6.1';
                     self.addEventListener('install', e => {
                         self.skipWaiting();
                     });

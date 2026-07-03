@@ -2,16 +2,9 @@
 <html lang="pt-PT" class="h-full bg-slate-50 text-slate-800">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mecanizar - Distribuição Transversal</title>
     
-    <meta name="theme-color" content="#0f172a">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Mecanizar">
-    
-    <link rel="manifest" href="data:application/json;base64,ewogICJkZWZhdWx0X2xvY2FsZSI6ICJwdCIsCiAgIm5hbWUiOiAiTWVjYW5pemFyIC0gRGlzdHJpYnVpw6fDo28iLAogICJzaG9ydF9uYW1lIjogIk1lY2FuaXphciIsCiAgImRlc2NyaXB0aW9uIjogIkF2YWxpYcOnw6NvIGRlIGRpc3RyaWJ1acOnw6NvIHRyYW5zdmVyc2FsIGRlIGZlcnRpbGl6YW50ZXMuIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmOGZhZmMiLAogICJ0aGVtZV9jb2xvciI6ICIjMGYxNzJhIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9jZG4taWNvbnMtcG5nLmZsaXRpY29uLmNvbS81MTIvMjE0LzIxNDMzOS5wbmciLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsCiAgICAgICJwdXJwb3NlIjogImFueSBtYXNrYWJsZSIKICAgIH0KICBdCn0=">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -33,6 +26,7 @@
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
@@ -41,6 +35,7 @@
         .tabs-scrollbar::-webkit-scrollbar { height: 4px; }
         .tabs-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         
+        /* --- CONFIGURAÇÃO CALIBRADA PARA PÁGINA CHEIA (A4 RETRATO) --- */
         @media print {
             @page {
                 size: portrait;
@@ -94,7 +89,7 @@
 </head>
 <body class="h-full flex flex-col overflow-hidden bg-slate-100">
 
-    <header class="bg-slate-900 text-white shadow-md z-30 shrink-0 no-print pt-[env(safe-area-inset-top,0px)]">
+    <header class="bg-slate-900 text-white shadow-md z-30 shrink-0 no-print">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="h-10 w-10 bg-mecanizar-500 rounded-xl flex items-center justify-center text-white shadow-md shadow-mecanizar-500/25">
@@ -107,7 +102,7 @@
             </div>
             <div class="flex items-center gap-2 text-xs font-semibold bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/55">
                 <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Módulo Adulanço v5.5</span>
+                <span>Módulo Adulanço v5.4</span>
             </div>
         </div>
     </header>
@@ -133,7 +128,7 @@
         </div>
     </nav>
 
-    <main class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full print-full-width pb-[env(safe-area-inset-bottom,16px)]">
+    <main class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full print-full-width">
 
         <section id="tab-1" class="space-y-6">
             <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-6">
@@ -387,16 +382,6 @@
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
             setupBandejas();
-            
-            // Ativa o Service Worker para habilitar instalação nativa PWA no Android/iOS
-            if ('serviceWorker' in navigator) {
-                const swCode = `
-                    self.addEventListener('install', e => self.skipWaiting());
-                    self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
-                `;
-                const blob = new Blob([swCode], { type: 'application/javascript' });
-                navigator.serviceWorker.register(URL.createObjectURL(blob));
-            }
         });
 
         window.addEventListener('beforeprint', () => {
@@ -594,6 +579,7 @@
             const valoresFocoCV = [];
             let somaFoco = 0;
 
+            // Inversão física (Modo Vai e Vem) no cálculo do coeficiente de variação estruturado
             for (let i = 0; i <= pontosAmostragemCV; i++) {
                 const xFoco = -lt + (i * (lt * 2)) / pontosAmostragemCV; 
                 const yCombined = getInterpolatedVal(xFoco) + getInterpolatedVal(-lt - xFoco) + getInterpolatedVal(lt - xFoco);
@@ -625,8 +611,8 @@
                 chartLabels.push(x.toFixed(1) + 'm');
                 
                 const yCent = getInterpolatedVal(x);
-                const yEsq = getInterpolatedVal(-lt - x); 
-                const yDir = getInterpolatedVal(lt - x);  
+                const yEsq = getInterpolatedVal(-lt - x); // Cauda esquerda encontra cauda esquerda espelhada
+                const yDir = getInterpolatedVal(lt - x);  // Cauda direita encontra cauda direita espelhada
                 
                 curveCentral.push(yCent);
                 curveEsquerda.push(yEsq);

@@ -2,9 +2,18 @@
 <html lang="pt-PT" class="h-full bg-slate-50 text-slate-800">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mecanizar - Distribuição Transversal</title>
     
+    <!-- Configurações para PWA e Dispositivos Móveis (iOS/Android) -->
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Mecanizar">
+    
+    <!-- Manifesto PWA embutido via Data URI -->
+    <link rel="manifest" href="data:application/json;base64,ewogICJkZWZhdWx0X2xvY2FsZSI6ICJwdCIsCiAgIm5hbWUiOiAiTWVjYW5pemFyIC0gRGlzdHJpYnVpw6fDo28iLAogICJzaG9ydF9uYW1lIjogIk1lY2FuaXphciIsCiAgImRlc2NyaXB0aW9uIjogIkF2YWxpYcOnw6NvIGRlIGRpc3RyaWJ1acOnw6NvIHRyYW5zdmVyc2FsIGRlIGZlcnRpbGl6YW50ZXMuIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmOGZhZmMiLAogICJ0aGVtZV9jb2xvciI6ICIjMGYxNzJhIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9jZG4taWNvbnMtcG5nLmZsaXRpY29uLmNvbS81MTIvMjE0LzIxNDMzOS5wbmciLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsCiAgICAgICJwdXJwb3NlIjogImFueSBtYXJsYWJsZSIKICAgIH0KICBdCn0=">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -26,7 +35,6 @@
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
@@ -35,61 +43,70 @@
         .tabs-scrollbar::-webkit-scrollbar { height: 4px; }
         .tabs-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         
-        /* --- CONFIGURAÇÃO CALIBRADA PARA PÁGINA CHEIA (A4 RETRATO) --- */
+        /* --- BLOCK DE IMPRESSÃO RE-CALIBRADO ANTI-MOBILE DISTORTION --- */
         @media print {
             @page {
                 size: portrait;
-                margin: 10mm 12mm 10mm 12mm;
+                margin: 0mm !important; /* Controlado internamente pelo container */
             }
             html, body {
-                height: auto !important;
-                overflow: hidden !important; 
+                height: 100% !important;
+                overflow: visible !important;
                 background: #ffffff !important;
                 color: #000000 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
             .no-print { display: none !important; }
             
-            #tab-4 { display: block !important; }
+            #tab-4 { display: block !important; width: 100% !important; }
             #tab-1, #tab-2, #tab-3 { display: none !important; }
 
+            /* Força uma folha A4 padrão virtual perfeita (794px x 1123px) independente do dispositivo */
             .print-full-width { 
-                width: 100% !important; 
-                max-width: 100% !important; 
+                width: 794px !important;
+                max-width: 794px !important;
+                min-width: 794px !important;
+                height: 1123px !important;
+                max-height: 1123px !important;
+                min-height: 1123px !important;
                 box-shadow: none !important; 
                 border: none !important; 
-                background: white !important; 
-                color: black !important; 
-                padding: 0 !important; 
-                margin: 0 !important;
+                background: #ffffff !important; 
+                padding: 40px 50px !important; 
+                margin: 0 auto !important;
+                box-sizing: border-box !important;
+                page-break-inside: avoid !important;
+                page-break-after: avoid !important;
             }
-            
-            .page-break { page-break-before: auto !important; }
             
             .chart-print-block { 
-                height: 220px !important; 
-                width: 100% !important; 
+                height: 210px !important; 
+                width: 100% !important;
                 position: relative !important;
                 display: block !important;
-                page-break-inside: avoid !important;
-                overflow: hidden !important;
-                margin-top: 4px !important;
+                margin-top: 2px !important;
+                margin-bottom: 2px !important;
             }
+            
             canvas {
-                max-height: 220px !important;
                 width: 100% !important;
+                height: 210px !important;
             }
             
             .laudo-container {
-                padding: 12px !important;
+                padding: 0px !important;
                 margin: 0 !important;
                 gap: 16px !important;
+                width: 100% !important;
+                height: 100% !important;
             }
         }
     </style>
 </head>
 <body class="h-full flex flex-col overflow-hidden bg-slate-100">
 
-    <header class="bg-slate-900 text-white shadow-md z-30 shrink-0 no-print">
+    <header class="bg-slate-900 text-white shadow-md z-30 shrink-0 no-print pt-[env(safe-area-inset-top,0px)]">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="h-10 w-10 bg-mecanizar-500 rounded-xl flex items-center justify-center text-white shadow-md shadow-mecanizar-500/25">
@@ -102,7 +119,7 @@
             </div>
             <div class="flex items-center gap-2 text-xs font-semibold bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/55">
                 <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Módulo Adulanço v5.4</span>
+                <span>Módulo Adulanço v5.7</span>
             </div>
         </div>
     </header>
@@ -128,7 +145,7 @@
         </div>
     </nav>
 
-    <main class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full print-full-width">
+    <main class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full print-full-width pb-[env(safe-area-inset-bottom,16px)]">
 
         <section id="tab-1" class="space-y-6">
             <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-6">
@@ -292,8 +309,8 @@
                     </div>
                 </div>
 
-                <div class="laudo-container bg-white border border-slate-200 rounded-3xl p-8 md:p-10 shadow-sm flex flex-col gap-6 print-full-width print:shadow-none print:border-none">
-                    <div class="flex items-center justify-between border-b-2 border-slate-900 pb-3">
+                <div class="laudo-container bg-white border border-slate-200 rounded-3xl p-8 md:p-10 shadow-sm flex flex-col gap-5 print-full-width print:shadow-none print:border-none print:p-0">
+                    <div class="flex items-center justify-between border-b-2 border-slate-900 pb-2">
                         <div class="flex items-center gap-3">
                             <div class="h-10 w-10 bg-mecanizar-500 rounded-lg flex items-center justify-center text-white font-bold text-base">M</div>
                             <div>
@@ -304,7 +321,7 @@
                         <div class="text-right font-mono text-xs text-slate-600 font-bold" id="laudo-data">--/--/----</div>
                     </div>
 
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl text-xs border border-slate-200 font-medium text-slate-700 print:bg-white print:border-slate-300">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-slate-50 p-3 rounded-xl text-xs border border-slate-200 font-medium text-slate-700 print:bg-white print:border-slate-300">
                         <div>
                             <span class="text-slate-400 block font-bold uppercase tracking-wider text-[9px] mb-0.5">Propriedade:</span>
                             <strong id="lbl-laudo-fazenda" class="text-slate-900 font-bold">Não Informado</strong>
@@ -323,32 +340,32 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-4 bg-slate-900 p-4 rounded-xl text-xs text-slate-300 font-medium">
+                    <div class="grid grid-cols-3 gap-4 bg-slate-900 p-3 rounded-xl text-xs text-slate-300 font-medium">
                         <div><span class="text-slate-400 block font-bold uppercase tracking-wider text-[10px] mb-0.5">Largura Passada (W):</span><strong id="laudo-w" class="text-white text-sm font-extrabold">-- m</strong></div>
                         <div><span class="text-slate-400 block font-bold uppercase tracking-wider text-[10px] mb-0.5">CV Estrito (-W a +W):</span><strong id="laudo-cv" class="text-white text-sm font-extrabold">-- %</strong></div>
                         <div><span class="text-slate-400 block font-bold uppercase tracking-wider text-[10px] mb-0.5">Desvio de Assimetria:</span><strong id="laudo-skew" class="text-white text-sm font-extrabold">--</strong></div>
                     </div>
 
-                    <div class="space-y-2">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">1. Gráfico de Distribuição por Bandejas (kg/ha)</h3>
-                        <div class="chart-print-block h-[220px] w-full border border-slate-100 rounded-xl p-1 bg-white">
+                    <div class="space-y-1">
+                        <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-500">1. Gráfico de Distribuição por Bandejas (kg/ha)</h3>
+                        <div class="chart-print-block h-[210px] w-full border border-slate-100 rounded-xl p-1 bg-white">
                             <canvas id="chart-laudo-bar-print"></canvas>
                         </div>
                     </div>
 
-                    <div class="space-y-2">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">2. Gráfico de Transpasse Lateral (Sobreposição de 3 Passadas)</h3>
-                        <div class="chart-print-block h-[220px] w-full border border-slate-100 rounded-xl p-1 bg-white">
+                    <div class="space-y-1">
+                        <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-500">2. Gráfico de Transpasse Lateral (Sobreposição de 3 Passadas)</h3>
+                        <div class="chart-print-block h-[210px] w-full border border-slate-100 rounded-xl p-1 bg-white">
                             <canvas id="chart-laudo-line-print"></canvas>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t-2 border-slate-200 items-end">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t-2 border-slate-200 items-end">
                         <div>
                             <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Parecer Técnico Agronómico</h4>
                             <p id="laudo-diagnostico" class="text-xs text-slate-700 leading-relaxed font-medium">A processar dados...</p>
                         </div>
-                        <div class="flex flex-col justify-end items-center pt-4">
+                        <div class="flex flex-col justify-end items-center pt-2">
                             <div class="w-full max-w-[240px] border-b border-slate-400 pb-1 text-center"></div>
                             <span id="lbl-laudo-assinatura" class="text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-wide">Técnico Responsável</span>
                         </div>
@@ -382,16 +399,14 @@
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
             setupBandejas();
-        });
-
-        window.addEventListener('beforeprint', () => {
-            if (chartBarPrintInstance) {
-                chartBarPrintInstance.resize();
-                chartBarPrintInstance.update('none');
-            }
-            if (chartPrintInstance) {
-                chartPrintInstance.resize();
-                chartPrintInstance.update('none');
+            
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    self.addEventListener('install', e => self.skipWaiting());
+                    self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
+                `;
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                navigator.serviceWorker.register(URL.createObjectURL(blob));
             }
         });
 
@@ -442,7 +457,7 @@
                 `;
                 container.appendChild(div);
             }
-            document.getElementById('coleta-pesos-container').classList.remove('hidden');
+            document.getElementById('coleta-pesos-container').classList.add('hidden');
         }
 
         function processarTudo(e) {
@@ -546,6 +561,9 @@
             
             document.title = `${maquinaClean}_${dataString}_${tecnicoClean}`.replace(/__+/g, '_');
             
+            if (chartBarPrintInstance) chartBarPrintInstance.update('none');
+            if (chartPrintInstance) chartPrintInstance.update('none');
+            
             window.print();
             
             setTimeout(() => {
@@ -579,7 +597,6 @@
             const valoresFocoCV = [];
             let somaFoco = 0;
 
-            // Inversão física (Modo Vai e Vem) no cálculo do coeficiente de variação estruturado
             for (let i = 0; i <= pontosAmostragemCV; i++) {
                 const xFoco = -lt + (i * (lt * 2)) / pontosAmostragemCV; 
                 const yCombined = getInterpolatedVal(xFoco) + getInterpolatedVal(-lt - xFoco) + getInterpolatedVal(lt - xFoco);
@@ -596,23 +613,23 @@
             document.getElementById('kpi-media').textContent = `${mediaFoco.toFixed(1)} kg/ha`;
             document.getElementById('kpi-cv').textContent = `${cvEstrito.toFixed(1)} %`;
 
-            const pointsCount = 140;
+            const pointsCount = 50; 
             const chartLabels = [];
             const curveCentral = [];
             const curveEsquerda = [];
             const curveDireita = [];
             const curveCombinada = [];
 
-            const minX = -lt * 1.6;
-            const maxX = lt * 1.6;
+            const minX = -lt * 1.5;
+            const maxX = lt * 1.5;
 
             for (let i = 0; i <= pointsCount; i++) {
                 const x = minX + (i * (maxX - minX)) / pointsCount;
                 chartLabels.push(x.toFixed(1) + 'm');
                 
                 const yCent = getInterpolatedVal(x);
-                const yEsq = getInterpolatedVal(-lt - x); // Cauda esquerda encontra cauda esquerda espelhada
-                const yDir = getInterpolatedVal(lt - x);  // Cauda direita encontra cauda direita espelhada
+                const yEsq = getInterpolatedVal(-lt - x); 
+                const yDir = getInterpolatedVal(lt - x);  
                 
                 curveCentral.push(yCent);
                 curveEsquerda.push(yEsq);
@@ -665,17 +682,17 @@
                         data: state.coletasKgha,
                         backgroundColor: 'rgba(22, 163, 74, 0.25)',
                         borderColor: '#16a34a',
-                        borderWidth: 2,
-                        borderRadius: 5
+                        borderWidth: 1.5,
+                        borderRadius: 4
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: true } },
+                    plugins: { legend: { display: isPrint ? false : true, labels: { font: { size: 9 } } } },
                     scales: {
-                        x: { title: { display: true, text: 'Posição (m)', font: { size: 10 } } },
-                        y: { title: { display: true, text: 'Taxa (kg/ha)', font: { size: 10 } }, min: 0 }
+                        x: { title: { display: true, text: 'Posição (m)', font: { size: 9 } }, ticks: { font: { size: 8 }, autoSkip: true, maxTicksLimit: 15 } },
+                        y: { title: { display: true, text: 'Taxa (kg/ha)', font: { size: 9 } }, min: 0, ticks: { font: { size: 8 } } }
                     }
                 }
             });
@@ -694,37 +711,37 @@
 
             const datasets = [
                 {
-                    label: 'Passada Central',
+                    label: 'Central',
                     data: central,
                     borderColor: '#16a34a',
-                    borderWidth: 2,
+                    borderWidth: 1.5,
                     fill: false,
                     pointRadius: 0
                 },
                 {
-                    label: `Passada Esq. (Invertida)`,
+                    label: `Esq.`,
                     data: esquerda,
                     borderColor: '#64748b',
-                    borderWidth: 1.5,
-                    borderDash: [5, 5],
+                    borderWidth: 1,
+                    borderDash: [4, 4],
                     fill: false,
                     pointRadius: 0
                 },
                 {
-                    label: `Passada Dir. (Invertida)`,
+                    label: `Dir.`,
                     data: direita,
                     borderColor: '#64748b',
-                    borderWidth: 1.5,
-                    borderDash: [5, 5],
+                    borderWidth: 1,
+                    borderDash: [4, 4],
                     fill: false,
                     pointRadius: 0
                 },
                 {
-                    label: 'Combinada (Sobreposição)',
+                    label: 'Combinada',
                     data: combinada,
                     borderColor: '#4f46e5',
-                    borderWidth: 3,
-                    backgroundColor: 'rgba(79, 70, 229, 0.08)',
+                    borderWidth: 2.5,
+                    backgroundColor: 'rgba(79, 70, 229, 0.05)',
                     fill: true,
                     pointRadius: 0
                 }
@@ -737,11 +754,14 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { labels: { boxWidth: 10, font: { size: isPrint ? 10 : 11 } } }
+                        legend: { display: true, position: 'top', labels: { boxWidth: 8, font: { size: 8 } } }
                     },
                     scales: {
-                        x: { title: { display: true, text: 'Largura Lateral (m)', font: { size: 10 } } },
-                        y: { title: { display: true, text: 'Taxa (kg/ha)', font: { size: 10 } }, min: 0 }
+                        x: { 
+                            title: { display: true, text: 'Largura Lateral (m)', font: { size: 9 } },
+                            ticks: { font: { size: 7 }, autoSkip: true, maxTicksLimit: 6 } 
+                        },
+                        y: { title: { display: true, text: 'Taxa (kg/ha)', font: { size: 9 } }, min: 0, ticks: { font: { size: 8 } } }
                     }
                 }
             });
